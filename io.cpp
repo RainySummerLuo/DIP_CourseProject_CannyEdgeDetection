@@ -1,4 +1,5 @@
 #include <opencv2/opencv.hpp>
+#include <io.h>
 #include "io.hpp"
 
 using namespace std;
@@ -13,17 +14,16 @@ Mat imgRead(char *filename) {
 }
 
 int imgSave(const string &filename, const Mat &img) {
-    int i = srcFilename.rfind('.');
-    int j = srcFilename.rfind('/');
-    string path = srcFilename.substr(0, j) + "/output/";
-    string name = path + filename + "_" + srcFilename.substr(j + 1);
+    int i = filename.rfind('.');
+    string path = "../output/";
+    string name = path + filename + "_" + filename.substr(i + 1);
     if (0 != access(path.c_str(), 0)) {
         // if this folder not exist, create a new one.
         mkdir(path.c_str());
     }
     vector<int> imwrite_params;
     Mat cvtImg;
-    string file_ext = toLowerCase(srcFilename.substr(i));
+    string file_ext = toLowerCase(filename.substr(i));
     if (file_ext == ".pgm" || file_ext == ".ppm" || file_ext == ".pbm") {
         imwrite_params.push_back(CV_IMWRITE_PXM_BINARY);
         imwrite_params.push_back(0);

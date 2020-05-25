@@ -9,67 +9,102 @@ int imgCannyEdge(Mat &srcImg) {
     float threshold2 = 140;
     int apertureSize = 3;
     bool L2gradient = true;
+    int filterType = 4;
 
     int cols = srcImg.cols;
     int rows = srcImg.rows;
 
-    TickMeter tm;
+    TickMeter tm1, tm2, tm3;
 
     Mat dstImg_opencv = Mat(rows, cols, CV_8U, Scalar(0));
-    tm.start();
+    tm1.start();
     cannyEdge_opencv(srcImg, dstImg_opencv, threshold1, threshold2, apertureSize, L2gradient);
-    tm.stop();
-    cout << "Time elapsed: " << tm.getTimeMilli() << "ms" << endl;
-
-    tm.reset();
+    tm1.stop();
+    cout << "Time elapsed: " << tm1.getTimeMilli() << "ms" << endl;
 
     Mat dstImg_opencv_modified = Mat(rows, cols, CV_8U, Scalar(0));
-    tm.start();
-    cannyEdge_opencv_modified(srcImg, dstImg_opencv_modified, threshold1, threshold2, apertureSize, L2gradient);
-    tm.stop();
-    cout << "Time elapsed: " << tm.getTimeMilli() << "ms" << endl;
+    tm2.start();
+    cannyEdge_opencv_modified(srcImg, dstImg_opencv_modified, threshold1, threshold2, apertureSize, L2gradient, filterType);
+    tm2.stop();
+    cout << "Time elapsed: " << tm2.getTimeMilli() << "ms" << endl;
 
-    tm.reset();
-
+    /*
     Mat dstImg_custom = Mat(rows, cols, CV_8U, Scalar(0));
-    tm.start();
+    tm3.start();
     cannyEdge_customized(srcImg, dstImg_custom, threshold1, threshold2, apertureSize, L2gradient);
-    tm.stop();
+    tm3.stop();
     cout << "Time elapsed: " << tm.getTimeMilli() << "ms" << endl;
+     */
 
     imshow("Source Image", srcImg);
     imshow("Result Image - OpenCV", dstImg_opencv);
     imshow("Result Image - OpenCV Modified", dstImg_opencv_modified);
-    imshow("Result Image - Customized", dstImg_custom);
+    // imshow("Result Image - Customized", dstImg_custom);
     waitKey(0);
     return 0;
 }
 
-void cannyEdge_opencv(const Mat& srcImg, Mat &dstImg, double threshold1, double threshold2, int apertureSize,
+void cannyEdge_opencv(const Mat &srcImg, Mat &dstImg, double threshold1, double threshold2, int apertureSize,
                       bool L2gradient) {
+    Size size = Size(3, 3);
+    Point point = Point(-1, -1);
+    int borderType = BORDER_REPLICATE;
+
     int cols = srcImg.cols;
     int rows = srcImg.rows;
     Mat gryImg = Mat(rows, cols, CV_8U, Scalar(0));
     convertRGB2GRAY(srcImg, gryImg);
     Mat dstImg_edge = Mat(rows, cols, CV_8U, Scalar(0));
-    blur(srcImg, dstImg_edge, Size(3, 3));
+    blur(srcImg, dstImg_edge, size, point, borderType);
     Canny(dstImg_edge, dstImg, threshold1, threshold2, apertureSize, L2gradient);
     //srcImg.copyTo(dstImg, dstImg_edge);
 }
 
-void cannyEdge_opencv_modified(const Mat& srcImg, Mat &dstImg, double threshold1, double threshold2, int apertureSize,
-                               bool L2gradient) {
+void cannyEdge_opencv_modified(const Mat &srcImg, Mat &dstImg, double threshold1, double threshold2, int apertureSize,
+                               bool L2gradient, int filterType) {
+    Size size = Size(apertureSize, apertureSize);
+    Point point = Point(-1, -1);
+    bool normalize = false;
+    int borderType = BORDER_REPLICATE;
+    int sigmaX = 0;
+    int sigmaY = 0;
+    int d = 6;
+    int sigmaColor = 175;
+    int sigmaSpace = 275;
+
     int cols = srcImg.cols;
     int rows = srcImg.rows;
     Mat gryImg = Mat(rows, cols, CV_8U, Scalar(0));
     convertRGB2GRAY(srcImg, gryImg);
-    Mat dstImg_edge = Mat(rows, cols, CV_8U, Scalar(0));
-    dstImg_edge = gryImg.clone();
-    Canny(dstImg_edge, dstImg, threshold1, threshold2, apertureSize, L2gradient);
-    //srcImg.copyTo(dstImg, dstImg_edge);
+    Mat dstImg_filter = Mat(rows, cols, CV_8U, Scalar(0));
+    switch (filterType) {
+        case 0:
+            blur(srcImg, dstImg_filter, size, point, borderType);
+            break;
+        case 1:
+            boxFilter(srcImg, dstImg_filter, -1, size, point, normalize, borderType);
+            break;
+        case 2:
+            GaussianBlur(srcImg, dstImg_filter, size, sigmaX, sigmaY, borderType);
+            break;
+        case 3:
+            medianBlur(srcImg, dstImg_filter, apertureSize);
+            break;
+        case 4:
+            bilateralFilter(srcImg, dstImg_filter, d, sigmaColor, sigmaSpace);
+            break;
+        default:
+            boxFilter(srcImg, dstImg_filter, -1, size, point, false, borderType);
+            break;
+    }
+    imshow("image filter", dstImg_filter);
+
+
+    Canny(dstImg_filter, dstImg, threshold1, threshold2, apertureSize, L2gradient);
+    //srcImg.copyTo(dstImg, dstImg_filter);
 }
 
-void cannyEdge_customized(Mat& srcImg, Mat &dstImg, double threshold1, double threshold2, int apertureSize,
+void cannyEdge_customized(Mat &srcImg, Mat &dstImg, double threshold1, double threshold2, int apertureSize,
                           bool L2gradient) {
     int cols = srcImg.cols;
     int rows = srcImg.rows;
@@ -94,68 +129,7 @@ void cannyEdge_customized(Mat& srcImg, Mat &dstImg, double threshold1, double th
             -1, -2, -1
     );
     xyGradient(blrImg, xygImg, L2gradient, Sx, Sy, threshold1, threshold2);
-
     dstImg = xygImg.clone();
-}
-
-/*
-void gaussianBlur(Mat &srcImg, Mat &dstImg) {
-    int cols = srcImg.cols;
-    int rows = srcImg.rows;
-    Mat gasImg(rows, cols, CV_8U, Scalar(0));
-    float **kernel = gaussKernel(3, 0.01);
-
-    Mat padImg = Mat(rows + 2, cols + 2, CV_8U, Scalar(0));
-    srcImg.copyTo(padImg(Rect(1, 1, cols, rows)));
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            gasImg.at<uchar>(i, j) =
-                    kernel[0][0] * (float) padImg.at<uchar>(i - 1, j - 1) +
-                    kernel[0][1] * (float) padImg.at<uchar>(i - 1, j) +
-                    kernel[0][2] * (float) padImg.at<uchar>(i - 1, j + 1) +
-                    kernel[1][0] * (float) padImg.at<uchar>(i, j - 1) +
-                    kernel[1][1] * (float) padImg.at<uchar>(i, j) +
-                    kernel[1][2] * (float) padImg.at<uchar>(i, j + 1) +
-                    kernel[2][0] * (float) padImg.at<uchar>(i + 1, j + 1) +
-                    kernel[2][1] * (float) padImg.at<uchar>(i + 1, j) +
-                    kernel[2][2] * (float) padImg.at<uchar>(i + 1, j + 1);
-        }
-    }
-    deleteKernel(kernel, 3);
-    dstImg = gasImg.clone();
-}
-*/
-
-float **gaussKernel(int k, float sigma) {
-    float **M;
-    float sum = 0;
-    M = new float *[k];
-    for (int i = 0; i < k; i++) {
-        M[i] = new float[k];
-    }
-    for (int i = -(k - 1) / 2; i < (k - 1) / 2 + 1; i++) {
-        for (int j = -(k - 1) / 2; j < (k - 1) / 2 + 1; j++) {
-            auto f1 = (float) (1.0 / (2 * CV_PI * pow(sigma, 2)));
-            auto f2 = (float) (-1 * (pow(i, 2) + pow(j, 2)));
-            auto f3 = (float) (f2 / (2 * pow(sigma, 2)));
-            M[i + (k - 1) / 2][j + (k - 1) / 2] = f1 * exp(f3);
-            sum = sum + M[i + (k - 1) / 2][j + (k - 1) / 2];
-        }
-    }
-    for (int i = 0; i < k; i++) {
-        for (int j = 0; j < k; j++) {
-            M[i][j] = M[i][j] / sum;
-        }
-    }
-    return M;
-}
-
-void deleteKernel(float **M, int k) {
-    for (int i = 0; i < k; i++) {
-        delete[] M[i];
-        M[i] = nullptr;
-    }
-    delete[] M;
 }
 
 void xyGradient(Mat &srcImg, Mat &dstImg, bool L2gradient, const Mat &Sx, const Mat &Sy, double min_thresh,

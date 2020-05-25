@@ -10,7 +10,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-set(SOURCE_FILES main.cpp courseproject.cpp courseproject.hpp courseproject.cpp courseproject.hpp io.cpp io.hpp)
+set(SOURCE_FILES main.cpp courseproject.cpp courseproject.hpp courseproject.cpp courseproject.hpp io.cpp io.hpp filter.cpp filter.hpp)
 add_executable(Project ${SOURCE_FILES})
 
 # linking

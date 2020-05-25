@@ -6,8 +6,6 @@
 using namespace std;
 using namespace cv;
 
-extern string srcFilename;
-
 Mat imgRead(char *);
 
 int imgSave(const string &, const Mat &);
