@@ -1,6 +1,10 @@
 #include "io.hpp"
 #include "filter.hpp"
 
+#define MIN2(a, b) ((a) < (b) ? (a) : (b))
+#define MAX2(a, b) ((a) > (b) ? (a) : (b))
+#define CLIP3(x, a, b) MIN2(MAX2(a,x), b)
+
 using namespace std;
 using namespace cv;
 
@@ -60,4 +64,34 @@ void deleteKernel(float **M, int k) {
         M[i] = nullptr;
     }
     delete[] M;
+}
+
+void anisotropic(Mat &srcImg, Mat &dstImg, int iter, float k, float lambda) {
+    int cols = srcImg.cols;
+    int rows = srcImg.rows;
+    
+    for (int it = 0; it < iter; ++it) {
+        for (int i = 0; i < rows; ++i) {
+            for (int j = 0; j < cols; ++j) {
+                int srcPixel = srcImg.at<uchar>(i, j);
+                
+                if (i == 0 || i == rows - 1 || j == 0 || j == cols - 1) {
+                    dstImg.at<uchar>(i, j) = srcPixel;
+                    continue;
+                }
+
+                float NI = (float) srcImg.at<uchar>(i, j - 1) - (float) srcPixel;
+                float EI = (float) srcImg.at<uchar>(i - 1, j) - (float) srcPixel;
+                float WI = (float) srcImg.at<uchar>(i + 1, j) - (float) srcPixel;
+                float SI = (float) srcImg.at<uchar>(i, j + 1) - (float) srcPixel;
+
+                float cN = exp(-NI * NI / (k * k));
+                float cE = exp(-EI * EI / (k * k));
+                float cW = exp(-WI * WI / (k * k));
+                float cS = exp(-SI * SI / (k * k));
+
+                dstImg.at<uchar>(i, j) = pixelSaturation((float) srcPixel + lambda * (cN * NI + cS * SI + cE * EI + cW * WI));
+            }
+        }
+    }
 }

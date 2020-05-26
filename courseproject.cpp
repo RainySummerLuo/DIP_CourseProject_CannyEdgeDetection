@@ -1,5 +1,6 @@
 #include "io.hpp"
 #include "courseproject.hpp"
+#include "filter.hpp"
 
 using namespace std;
 using namespace cv;
@@ -9,7 +10,7 @@ int imgCannyEdge(Mat &srcImg) {
     float threshold2 = 140;
     int apertureSize = 3;
     bool L2gradient = true;
-    int filterType = 4;
+    int filterType = 5;
 
     int cols = srcImg.cols;
     int rows = srcImg.rows;
@@ -71,30 +72,37 @@ void cannyEdge_opencv_modified(const Mat &srcImg, Mat &dstImg, double threshold1
     int d = 6;
     int sigmaColor = 175;
     int sigmaSpace = 275;
+    int iter = 5;
+    int k = 40;
+    float lambda = 0.75;
 
     int cols = srcImg.cols;
     int rows = srcImg.rows;
     Mat gryImg = Mat(rows, cols, CV_8U, Scalar(0));
     convertRGB2GRAY(srcImg, gryImg);
     Mat dstImg_filter = Mat(rows, cols, CV_8U, Scalar(0));
+    Mat src_img = gryImg.clone();
     switch (filterType) {
         case 0:
-            blur(srcImg, dstImg_filter, size, point, borderType);
+            blur(gryImg, dstImg_filter, size, point, borderType);
             break;
         case 1:
-            boxFilter(srcImg, dstImg_filter, -1, size, point, normalize, borderType);
+            boxFilter(gryImg, dstImg_filter, -1, size, point, normalize, borderType);
             break;
         case 2:
-            GaussianBlur(srcImg, dstImg_filter, size, sigmaX, sigmaY, borderType);
+            GaussianBlur(gryImg, dstImg_filter, size, sigmaX, sigmaY, borderType);
             break;
         case 3:
-            medianBlur(srcImg, dstImg_filter, apertureSize);
+            medianBlur(gryImg, dstImg_filter, apertureSize);
             break;
         case 4:
-            bilateralFilter(srcImg, dstImg_filter, d, sigmaColor, sigmaSpace);
+            bilateralFilter(gryImg, dstImg_filter, d, sigmaColor, sigmaSpace);
+            break;
+        case 5:
+            anisotropic(src_img, dstImg_filter, iter, k, lambda);
             break;
         default:
-            boxFilter(srcImg, dstImg_filter, -1, size, point, false, borderType);
+            boxFilter(gryImg, dstImg_filter, -1, size, point, false, borderType);
             break;
     }
     imshow("image filter", dstImg_filter);

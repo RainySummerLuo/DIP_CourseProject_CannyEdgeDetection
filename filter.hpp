@@ -11,4 +11,6 @@ float** gaussKernel(int, float);
 
 void deleteKernel(float**, int);
 
+void anisotropic(Mat &srcImg, Mat &dstImg, int iter, float k, float lambda);
+
 #endif //COURSE_PROJECT_FILTER_HPP
