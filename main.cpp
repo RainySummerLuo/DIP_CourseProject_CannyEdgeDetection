@@ -5,7 +5,7 @@
 using namespace cv;
 
 int main() {
-    char srcFile[] = "../pic/lena.png";
+    char srcFile[] = "../pic/marion_airport.png";
     string srcPicFileName = srcFile;
     Mat srcImg = imgRead(srcFile);
     imgCannyEdge(srcImg);

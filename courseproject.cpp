@@ -17,15 +17,17 @@ int imgCannyEdge(Mat &srcImg) {
 
     TickMeter tm1, tm2, tm3;
 
+    Mat srcImg_opencv = srcImg.clone();
     Mat dstImg_opencv = Mat(rows, cols, CV_8U, Scalar(0));
     tm1.start();
-    cannyEdge_opencv(srcImg, dstImg_opencv, threshold1, threshold2, apertureSize, L2gradient);
+    cannyEdge_opencv(srcImg_opencv, dstImg_opencv, threshold1, threshold2, apertureSize, L2gradient);
     tm1.stop();
     cout << "Time elapsed: " << tm1.getTimeMilli() << "ms" << endl;
 
+    Mat srcImg_opencv_modified = srcImg.clone();
     Mat dstImg_opencv_modified = Mat(rows, cols, CV_8U, Scalar(0));
     tm2.start();
-    cannyEdge_opencv_modified(srcImg, dstImg_opencv_modified, threshold1, threshold2, apertureSize, L2gradient, filterType);
+    cannyEdge_opencv_modified(srcImg_opencv_modified, dstImg_opencv_modified, threshold1, threshold2, apertureSize, L2gradient, filterType);
     tm2.stop();
     cout << "Time elapsed: " << tm2.getTimeMilli() << "ms" << endl;
 
@@ -37,7 +39,7 @@ int imgCannyEdge(Mat &srcImg) {
     cout << "Time elapsed: " << tm.getTimeMilli() << "ms" << endl;
      */
 
-    imshow("Source Image", srcImg);
+    //imshow("Source Image", srcImg);
     imshow("Result Image - OpenCV", dstImg_opencv);
     imshow("Result Image - OpenCV Modified", dstImg_opencv_modified);
     // imshow("Result Image - Customized", dstImg_custom);
@@ -72,8 +74,8 @@ void cannyEdge_opencv_modified(const Mat &srcImg, Mat &dstImg, double threshold1
     int d = 6;
     int sigmaColor = 175;
     int sigmaSpace = 275;
-    int iter = 5;
-    int k = 40;
+    int iter = 50;
+    int k = 1000;
     float lambda = 0.75;
 
     int cols = srcImg.cols;
@@ -106,8 +108,6 @@ void cannyEdge_opencv_modified(const Mat &srcImg, Mat &dstImg, double threshold1
             break;
     }
     imshow("image filter", dstImg_filter);
-
-
     Canny(dstImg_filter, dstImg, threshold1, threshold2, apertureSize, L2gradient);
     //srcImg.copyTo(dstImg, dstImg_filter);
 }
